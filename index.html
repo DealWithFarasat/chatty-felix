@@ -271,6 +271,155 @@
       margin-top: 4px;
     }
 
+    .message-media {
+      max-width: 100%;
+      border-radius: 8px;
+      margin-top: 4px;
+    }
+
+    .message-media img {
+      max-width: 250px;
+      max-height: 300px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+
+    .message-media img:hover {
+      transform: scale(1.02);
+    }
+
+    .message-media video {
+      max-width: 280px;
+      max-height: 300px;
+      border-radius: 8px;
+    }
+
+    .message.sent .message-media img,
+    .message.sent .message-media video {
+      border: 2px solid #0a0a0a;
+    }
+
+    .message.received .message-media img,
+    .message.received .message-media video {
+      border: 2px solid #404040;
+    }
+
+    .file-progress {
+      font-size: 0.75rem;
+      color: #a1a1a1;
+      margin-top: 4px;
+    }
+
+    .media-btn {
+      background-color: #262626;
+      color: #fafafa;
+      padding: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .media-btn:hover {
+      background-color: #404040;
+    }
+
+    .media-btn svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .file-input {
+      display: none;
+    }
+
+    .media-preview {
+      display: none;
+      padding: 12px 20px;
+      background-color: #1a1a1a;
+      border-left: 1px solid #262626;
+      border-right: 1px solid #262626;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .media-preview.active {
+      display: flex;
+    }
+
+    .media-preview-thumb {
+      width: 60px;
+      height: 60px;
+      border-radius: 8px;
+      object-fit: cover;
+      background-color: #262626;
+    }
+
+    .media-preview-info {
+      flex: 1;
+    }
+
+    .media-preview-name {
+      font-size: 0.875rem;
+      color: #fafafa;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 200px;
+    }
+
+    .media-preview-size {
+      font-size: 0.75rem;
+      color: #737373;
+    }
+
+    .media-preview-remove {
+      background-color: transparent;
+      color: #ef4444;
+      padding: 8px;
+      border: 1px solid #ef4444;
+    }
+
+    .media-preview-remove:hover {
+      background-color: #ef4444;
+      color: #fafafa;
+    }
+
+    .lightbox {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.95);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .lightbox.active {
+      display: flex;
+    }
+
+    .lightbox img {
+      max-width: 90%;
+      max-height: 90%;
+      object-fit: contain;
+    }
+
+    .lightbox-close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background-color: transparent;
+      color: #fafafa;
+      border: 1px solid #525252;
+      padding: 10px 16px;
+      font-size: 0.875rem;
+    }
+
     .chat-input {
       display: flex;
       gap: 12px;
@@ -406,11 +555,30 @@
         <button class="disconnect-btn" id="disconnectBtn">Disconnect</button>
       </div>
       <div class="messages" id="messages"></div>
+      <div class="media-preview" id="mediaPreview">
+        <img class="media-preview-thumb" id="mediaPreviewThumb" src="" alt="Preview">
+        <div class="media-preview-info">
+          <div class="media-preview-name" id="mediaPreviewName">filename.jpg</div>
+          <div class="media-preview-size" id="mediaPreviewSize">0 KB</div>
+        </div>
+        <button class="media-preview-remove" id="mediaPreviewRemove">Cancel</button>
+      </div>
       <div class="chat-input">
+        <input type="file" id="fileInput" class="file-input" accept="image/*,video/*">
+        <button class="media-btn" id="mediaBtn" title="Send image or video">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+          </svg>
+        </button>
         <input type="text" id="messageInput" placeholder="Type a message...">
         <button class="send-btn" id="sendBtn">Send</button>
       </div>
     </div>
+  </div>
+
+  <div class="lightbox" id="lightbox">
+    <button class="lightbox-close" id="lightboxClose">Close</button>
+    <img id="lightboxImg" src="" alt="Full size">
   </div>
 
   <div class="copy-toast" id="copyToast">Code copied to clipboard!</div>
@@ -433,10 +601,23 @@
     const peerAvatar = document.getElementById('peerAvatar');
     const peerName = document.getElementById('peerName');
     const copyToast = document.getElementById('copyToast');
+    const fileInput = document.getElementById('fileInput');
+    const mediaBtn = document.getElementById('mediaBtn');
+    const mediaPreview = document.getElementById('mediaPreview');
+    const mediaPreviewThumb = document.getElementById('mediaPreviewThumb');
+    const mediaPreviewName = document.getElementById('mediaPreviewName');
+    const mediaPreviewSize = document.getElementById('mediaPreviewSize');
+    const mediaPreviewRemove = document.getElementById('mediaPreviewRemove');
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImg = document.getElementById('lightboxImg');
+    const lightboxClose = document.getElementById('lightboxClose');
 
     let peer = null;
     let conn = null;
     let myId = null;
+    let selectedFile = null;
+    let incomingFiles = {};
+    const CHUNK_SIZE = 16384; // 16KB chunks for reliable transfer
 
     // Generate a short, readable ID
     function generateShortId() {
@@ -521,6 +702,32 @@
       conn.on('data', (data) => {
         if (data.type === 'message') {
           addMessage(data.content, false);
+        } else if (data.type === 'file-start') {
+          // Start receiving a new file
+          incomingFiles[data.fileId] = {
+            name: data.name,
+            mimeType: data.mimeType,
+            size: data.size,
+            chunks: [],
+            totalChunks: data.totalChunks,
+            received: 0
+          };
+        } else if (data.type === 'file-chunk') {
+          // Receive a chunk
+          const file = incomingFiles[data.fileId];
+          if (file) {
+            file.chunks[data.index] = data.chunk;
+            file.received++;
+            
+            // Check if all chunks received
+            if (file.received === file.totalChunks) {
+              // Reassemble file
+              const blob = new Blob(file.chunks, { type: file.mimeType });
+              const url = URL.createObjectURL(blob);
+              addMediaMessage(url, file.mimeType, false);
+              delete incomingFiles[data.fileId];
+            }
+          }
         }
       });
 
@@ -586,11 +793,155 @@
     // Send message
     function sendMessage() {
       const content = messageInput.value.trim();
+      
+      // Check if there's a file to send
+      if (selectedFile && conn) {
+        sendFile(selectedFile);
+        clearFilePreview();
+      }
+      
       if (!content || !conn) return;
 
       conn.send({ type: 'message', content });
       addMessage(content, true);
       messageInput.value = '';
+    }
+
+    // Add media message to chat
+    function addMediaMessage(url, mimeType, isSent) {
+      const msgEl = document.createElement('div');
+      msgEl.className = `message ${isSent ? 'sent' : 'received'}`;
+      
+      const mediaContainer = document.createElement('div');
+      mediaContainer.className = 'message-media';
+      
+      if (mimeType.startsWith('image/')) {
+        const img = document.createElement('img');
+        img.src = url;
+        img.alt = 'Shared image';
+        img.onclick = () => openLightbox(url);
+        mediaContainer.appendChild(img);
+      } else if (mimeType.startsWith('video/')) {
+        const video = document.createElement('video');
+        video.src = url;
+        video.controls = true;
+        video.preload = 'metadata';
+        mediaContainer.appendChild(video);
+      }
+      
+      msgEl.appendChild(mediaContainer);
+      messagesEl.appendChild(msgEl);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    // Send file with chunking
+    function sendFile(file) {
+      const fileId = Date.now().toString(36) + Math.random().toString(36).substr(2);
+      const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+      
+      // Send file metadata first
+      conn.send({
+        type: 'file-start',
+        fileId: fileId,
+        name: file.name,
+        mimeType: file.type,
+        size: file.size,
+        totalChunks: totalChunks
+      });
+      
+      // Read and send chunks
+      const reader = new FileReader();
+      let offset = 0;
+      let chunkIndex = 0;
+      
+      reader.onload = (e) => {
+        conn.send({
+          type: 'file-chunk',
+          fileId: fileId,
+          index: chunkIndex,
+          chunk: e.target.result
+        });
+        
+        chunkIndex++;
+        offset += CHUNK_SIZE;
+        
+        if (offset < file.size) {
+          readNextChunk();
+        } else {
+          // All chunks sent, show in our chat
+          const url = URL.createObjectURL(file);
+          addMediaMessage(url, file.type, true);
+        }
+      };
+      
+      function readNextChunk() {
+        const slice = file.slice(offset, offset + CHUNK_SIZE);
+        reader.readAsArrayBuffer(slice);
+      }
+      
+      readNextChunk();
+    }
+
+    // Handle file selection
+    function handleFileSelect(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      // Check file size (limit to 50MB)
+      if (file.size > 50 * 1024 * 1024) {
+        alert('File too large. Maximum size is 50MB.');
+        return;
+      }
+      
+      selectedFile = file;
+      
+      // Show preview
+      mediaPreview.classList.add('active');
+      mediaPreviewName.textContent = file.name;
+      mediaPreviewSize.textContent = formatFileSize(file.size);
+      
+      if (file.type.startsWith('image/')) {
+        mediaPreviewThumb.src = URL.createObjectURL(file);
+      } else if (file.type.startsWith('video/')) {
+        // Use video thumbnail or placeholder
+        const video = document.createElement('video');
+        video.src = URL.createObjectURL(file);
+        video.currentTime = 0.5;
+        video.onloadeddata = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = 60;
+          canvas.height = 60;
+          canvas.getContext('2d').drawImage(video, 0, 0, 60, 60);
+          mediaPreviewThumb.src = canvas.toDataURL();
+        };
+      }
+    }
+
+    // Clear file preview
+    function clearFilePreview() {
+      selectedFile = null;
+      mediaPreview.classList.remove('active');
+      mediaPreviewThumb.src = '';
+      fileInput.value = '';
+    }
+
+    // Format file size
+    function formatFileSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    // Open lightbox for images
+    function openLightbox(url) {
+      lightboxImg.src = url;
+      lightbox.classList.add('active');
+    }
+
+    // Close lightbox
+    function closeLightbox() {
+      lightbox.classList.remove('active');
+      lightboxImg.src = '';
     }
 
     // Copy code to clipboard
@@ -639,6 +990,30 @@
         conn.close();
       }
       hideChat();
+    });
+
+    // Media event listeners
+    mediaBtn.addEventListener('click', () => {
+      fileInput.click();
+    });
+
+    fileInput.addEventListener('change', handleFileSelect);
+
+    mediaPreviewRemove.addEventListener('click', clearFilePreview);
+
+    lightbox.addEventListener('click', (e) => {
+      if (e.target === lightbox) {
+        closeLightbox();
+      }
+    });
+
+    lightboxClose.addEventListener('click', closeLightbox);
+
+    // Keyboard shortcut to close lightbox
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && lightbox.classList.contains('active')) {
+        closeLightbox();
+      }
     });
 
     // Initialize
